@@ -8,6 +8,8 @@ Created on Sun Apr 26 18:13:08 2020
 import pandas as pd
 import numpy as np
 from sklearn.metrics import f1_score
+from sklearn.metrics import confusion_matrix
+from sklearn.metrics import classification_report
 import preprocessing as pre
 import pylab   
 import matplotlib.ticker as mtick
@@ -48,9 +50,9 @@ change_card_feautres = ['diff_locdt_with_last_trans_cano',
                         'diff_locdt_of_two_card']
 
 conam_feautres = [
-    # 'cano_locdt_conam_min',
-    #               'cano_locdt_conam_max',
-    #               'diff_gtime_with_conam_zero_trans_locdt',
+                   'cano_locdt_conam_min',
+                   'cano_locdt_conam_max',
+                   'diff_gtime_with_conam_zero_trans_locdt',
                    'bacno_conam_mean',
                    'bacno_conam_median',
                    'diff_bacno_conam_mean',
@@ -77,28 +79,27 @@ mchno_features = ['bacno_mchno_locdt_head_tail_diff',
 #                     'conam_in_fraud_conam_list',
 #                     'diff_with_first_fraud_locdt']
 
-# base_features =  (    raw_bool_features 
-#                     + raw_categorial_features
-#                     + raw_contiuous_feautres
-#                     + transaction_frequency_feautres
-#                     + time_feautres
-#                     + change_card_feautres
-#                     + conam_feautres 
-#                     + mchno_features
-#                         )
-
 base_features =  (    raw_bool_features 
                     + raw_categorial_features
                     + raw_contiuous_feautres
-                    + conam_feautres
+                    + transaction_frequency_feautres
+                    + time_feautres
+                    + change_card_feautres
+                    + conam_feautres 
+                    + mchno_features
                         )
+
+# base_features =  (    raw_bool_features 
+#                     + raw_categorial_features
+#                     + raw_contiuous_feautres
+#                         )
 
 label = 'fraud_ind'
 
 #%% preprocessing
 preprocess = False
 if preprocess:
-    df = pd.read_csv('../data/train.csv')
+    df = pd.read_csv('train.csv')
     # df = pre.preprocess_init(df)
     df = pre.preprocess_bool(df, raw_bool_features)
     df = pre.preprocess_time(df)
@@ -106,16 +107,32 @@ if preprocess:
     df = pre.preprocess_change_card(df)
     df = pre.preprocess_mchno(df)
     df = pre.preprocess_conam(df)
-    df.to_pickle('../data/df_preprocessed.pkl')
+    df.to_pickle('df_preprocessed.pkl')
 else:
-    df = pd.read_pickle('../data/df_preprocessed.pkl')
+    df = pd.read_pickle('df_preprocessed.pkl')
 
+# df = pd.read_csv('train.csv')
+# df = pre.preprocess_init(df)
+# df = pre.preprocess_bool(df, raw_bool_features)
 train, dev, test = pre.preprocess_split_train_dev_test(df)
 train_x, train_y = pre.generate_x_y(train, base_features, label)
 dev_x, dev_y = pre.generate_x_y(dev, base_features, label)
 test_x, test_y = pre.generate_x_y(test, base_features, label)
 
 #%% model
+## f1: 39 ~ 41 
+# from sklearn.tree import DecisionTreeClassifier
+# model = DecisionTreeClassifier(max_depth=None, criterion='entropy', random_state=0)
+# model = model.fit(train_x, train_y)
+
+# ## f1: 52 ~ 53 
+# from sklearn.ensemble import RandomForestClassifier
+# model = RandomForestClassifier(n_estimators=100, criterion='entropy', random_state=0)
+# model = model.fit(train_x, train_y)
+
+# from sklearn.cluster import KMeans
+# model = KMeans(n_clusters=2, random_state=0, verbose=1).fit(train_x)
+
 def F1_score(y_hat, data):
     y_true = data.get_label()
     y_hat = np.round(y_hat) # scikits f1 doesn't like probabilities
@@ -170,6 +187,30 @@ ax.legend()
 ax.set_xlabel('epoch', fontsize=20)
 ax.set_ylabel('f1', fontsize=20)     
 pylab.tick_params(which='major', width=4)
+
+#%% performance
+# pred_y_train = model.predict(train_x)
+# pred_y_dev = model.predict(dev_x)
+# pred_y_test = model.predict(test_x)
+
+# print (f'train acc: {model.score(train_x, train_y)}')
+# print (f'train f1: {f1_score(train_y, pred_y_train)}')
+# print (confusion_matrix(train_y, pred_y_train))
+# print (classification_report(train_y, pred_y_train, digits=4))
+# print ('-----------------------------')
+# print (f'dev acc: {model.score(dev_x, dev_y)}')
+# print (f'dev f1: {f1_score(dev_y, pred_y_dev)}')
+# print (confusion_matrix(dev_y, pred_y_dev))
+# print (classification_report(dev_y, pred_y_dev, digits=4))
+# print ('-----------------------------')
+# print (f'test acc: {model.score(test_x, test_y)}')
+# print (f'test f1: {f1_score(test_y, pred_y_test)}')
+# print (confusion_matrix(test_y, pred_y_test))
+# print (classification_report(test_y, pred_y_test, digits=4))
+
+
+
+
 
 
 
